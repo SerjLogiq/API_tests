@@ -44,19 +44,26 @@ import { faker } from '@faker-js/faker'
       })
   })
 
-  it('5 Create post with adding access token in header. Verify HTTP response status code. Verify post is created.', () => {
-   //в задачі було написано юзати шлях 664/post я подумав що це помилка чи копіпаст і юзав /posts 
-   cy.request('GET','/posts').then(response => {
-      let x = response.body.length
-      cy.log('**Creating a new post and checking that amount of posts become bigger with new one by length**')
-      cy.request({method: 'POST', url: '/posts',  headers: {"access_token" : 12345678 }}).then(response => {
-        expect (response.status).to.be.eq(201); // status code
-        
-        expect (response.body['id']).to.be.above(x) 
+  it(' 5 Create post with adding access token in header. Verify HTTP response status code. Verify post is created.', () => {
+
+    let testUser = {
+             email: faker.internet.email(),
+             password: faker.internet.password()
+             }
+    cy.log('**Creating new user and taking it accessToken**')   
+    cy.request('POST','/register',testUser).then(response => {
+      expect (response.status).to.be.eq(201);
+      let creationResponse = response.body
+      cy.log('**Creating new post witn using accessToken**')
+      cy.request({method: 'POST', url: '/664/posts', testUser, auth: { bearer: creationResponse.accessToken }}).then(response => {
+        expect (response.status).to.be.eq(201); 
+        let newCreatedPost = response.body['id']
+        cy.get('When new post is created checking that arrey langht equal to new created post id')
+        cy.request('GET','/posts').then(response => {
+          expect (response.body.length).to.be.eq(newCreatedPost);  // проста перевірка але в даній логіці дієва
         })
-      
     })
-    
+  })
   })
 
   it('6 Create post entity and verify that the entity is created. Verify HTTP response status code. Use JSON in body.', () => {
@@ -150,6 +157,8 @@ import { faker } from '@faker-js/faker'
        
     
   })
+
+  
 
 
   
